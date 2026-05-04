@@ -1,0 +1,23 @@
+{
+    "name": "survos/supervisor-bundle",
+    "description": "Supervises a configured set of long-running processes and presents them in a multi-pane TUI.",
+    "type": "symfony-bundle",
+    "license": "MIT",
+    "require": {
+        "php": ">=8.4",
+        "symfony/config": "^8.1",
+        "symfony/console": "^8.1",
+        "symfony/dependency-injection": "^8.1",
+        "symfony/http-kernel": "^8.1",
+        "symfony/process": "^8.1",
+        "symfony/tui": "8.1.x-dev",
+        "symfony/yaml": "^8.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Survos\\SupervisorBundle\\": "src/"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

@@ -1,0 +1,27 @@
+processes:
+  slow_chatter:
+    cmd: ['sh', '-c', 'i=0; while true; do echo "tick $i $(date +%T)"; i=$((i+1)); sleep 1; done']
+    restart: always
+
+  fast_chatter:
+    cmd: ['sh', '-c', 'i=0; while true; do echo "fast $i"; i=$((i+1)); sleep 0.05; done']
+    restart: always
+
+  oneshot:
+    cmd: ['ls', '-la', '/etc']
+    restart: never
+
+  flaky:
+    cmd: ['sh', '-c', 'echo starting; sleep 2; exit 1']
+    restart: on-failure
+    backoff:
+      initial: 1.0
+      max: 30.0
+      multiplier: 2.0
+
+  noisy_stderr:
+    cmd: ['sh', '-c', 'while true; do echo stdout; echo stderr >&2; sleep 0.5; done']
+    restart: always
+
+ring_buffer_lines: 5000
+follow_by_default: true
