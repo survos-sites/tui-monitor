@@ -1471,6 +1471,22 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     generate_final_classes?: bool|Param, // Default: true
  *     generate_final_entities?: bool|Param, // Default: false
  * }
+ * @psalm-type SurvosSupervisorConfig = array{
+ *     ring_buffer_lines?: int|Param, // Default: 5000
+ *     follow_by_default?: bool|Param, // Default: true
+ *     processes?: array<string, array{ // Default: []
+ *             cmd?: list<scalar|Param|null>,
+ *             cwd?: scalar|Param|null, // Default: null
+ *             env?: list<scalar|Param|null>,
+ *             restart?: "never"|"on-failure"|"always"|Param, // Default: "never"
+ *             backoff?: array{
+ *                 initial?: float|Param, // Default: 1.0
+ *                 max?: float|Param, // Default: 30.0
+ *                 multiplier?: float|Param, // Default: 2.0
+ *             },
+ *             autostart?: bool|Param, // Default: true
+ *         }>,
+ * }
  * @psalm-type ConfigType = array{
  *     imports?: ImportsConfig,
  *     parameters?: ParametersConfig,
@@ -1484,6 +1500,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     twig_extra?: TwigExtraConfig,
  *     security?: SecurityConfig,
  *     monolog?: MonologConfig,
+ *     survos_supervisor?: SurvosSupervisorConfig,
  *     "when@dev"?: array{
  *         imports?: ImportsConfig,
  *         parameters?: ParametersConfig,
@@ -1500,6 +1517,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         security?: SecurityConfig,
  *         monolog?: MonologConfig,
  *         maker?: MakerConfig,
+ *         survos_supervisor?: SurvosSupervisorConfig,
  *     },
  *     "when@prod"?: array{
  *         imports?: ImportsConfig,
@@ -1514,6 +1532,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         twig_extra?: TwigExtraConfig,
  *         security?: SecurityConfig,
  *         monolog?: MonologConfig,
+ *         survos_supervisor?: SurvosSupervisorConfig,
  *     },
  *     "when@test"?: array{
  *         imports?: ImportsConfig,
@@ -1529,6 +1548,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         twig_extra?: TwigExtraConfig,
  *         security?: SecurityConfig,
  *         monolog?: MonologConfig,
+ *         survos_supervisor?: SurvosSupervisorConfig,
  *     },
  *     ...<string, ExtensionType|array{ // extra keys must follow the when@%env% pattern or match an extension alias
  *         imports?: ImportsConfig,
