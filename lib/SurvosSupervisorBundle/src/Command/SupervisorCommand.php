@@ -8,6 +8,7 @@ use Survos\SupervisorBundle\Process\ManagedProcess;
 use Survos\SupervisorBundle\Process\ProcessConfig;
 use Survos\SupervisorBundle\Process\Supervisor;
 use Survos\SupervisorBundle\SurvosSupervisorBundle;
+use Survos\SupervisorBundle\Tui\Dashboard;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -54,13 +55,11 @@ final class SupervisorCommand
 
         $supervisor = new Supervisor($this->projectDir, $processConfigs, $resolved['ring_buffer_lines']);
 
-        if (!$noTui) {
-            $io->warning('TUI mode not yet implemented. Re-run with --no-tui for the streaming fallback.');
-
-            return Command::FAILURE;
+        if ($noTui) {
+            return $this->runStreaming($io, $supervisor, $source);
         }
 
-        return $this->runStreaming($io, $supervisor, $source);
+        return (new Dashboard($supervisor, $resolved['follow_by_default']))->run();
     }
 
     /**
