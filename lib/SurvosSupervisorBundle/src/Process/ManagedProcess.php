@@ -237,15 +237,38 @@ final class ManagedProcess
 
         $changed = false;
         if ('' !== $stdout) {
-            $this->stdoutPartial .= $stdout;
+            $this->stdoutPartial .= self::sanitize($stdout);
             $changed = $this->flushPartial($this->stdoutPartial, '') || $changed;
         }
         if ('' !== $stderr) {
-            $this->stderrPartial .= $stderr;
+            $this->stderrPartial .= self::sanitize($stderr);
             $changed = $this->flushPartial($this->stderrPartial, '[err] ') || $changed;
         }
 
         return $changed;
+    }
+
+    /**
+     * Normalize line endings and strip terminal-control escape sequences that
+     * would corrupt our line-buffer model, while preserving SGR (color/style)
+     * codes. Specifically:
+     *
+     *   - \r\n   → \n  (CRLF normalization)
+     *   - \r     → \n  (treat carriage return as a line break; progress-bar
+     *                   style "rewrite the current line" becomes one line per
+     *                   update — noisy but bounded)
+     *   - CSI <…> [letter except 'm'] → stripped (cursor moves, erase line,
+     *                   clear screen, save/restore cursor, etc.)
+     *   - CSI <…>m → kept (SGR: colors and text attributes)
+     *   - OSC … BEL/ST → stripped (terminal title, hyperlinks)
+     */
+    private static function sanitize(string $chunk): string
+    {
+        $chunk = strtr($chunk, ["\r\n" => "\n", "\r" => "\n"]);
+        $chunk = preg_replace('/\x1b\[[0-9;?]*[A-La-ln-z]/', '', $chunk) ?? $chunk;
+        $chunk = preg_replace('/\x1b\][^\x07\x1b]*(?:\x07|\x1b\\\\)/', '', $chunk) ?? $chunk;
+
+        return $chunk;
     }
 
     private function flushPartial(string &$buf, string $prefix): bool

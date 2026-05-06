@@ -28,6 +28,7 @@ final class LogViewerWidget extends AbstractWidget implements FocusableInterface
     private array $lines = [];
     private int $scrollOffset = 0;
     private bool $follow = true;
+    private bool $wrap = false;
     private bool $verticallyExpanded = true;
     private int $lastViewportRows = 20;
 
@@ -41,6 +42,17 @@ final class LogViewerWidget extends AbstractWidget implements FocusableInterface
     public function isFollowing(): bool
     {
         return $this->follow;
+    }
+
+    public function isWrapping(): bool
+    {
+        return $this->wrap;
+    }
+
+    public function toggleWrap(): void
+    {
+        $this->wrap = !$this->wrap;
+        $this->invalidate();
     }
 
     public function setFollow(bool $follow): void
@@ -158,6 +170,11 @@ final class LogViewerWidget extends AbstractWidget implements FocusableInterface
 
             return;
         }
+        if ($kb->matches($data, 'log_toggle_wrap')) {
+            $this->toggleWrap();
+
+            return;
+        }
     }
 
     public function render(RenderContext $context): array
@@ -169,6 +186,18 @@ final class LogViewerWidget extends AbstractWidget implements FocusableInterface
         $out = [];
         if (!$this->lines) {
             $out[] = AnsiUtils::truncateToWidth(' (no output yet)', $cols, '');
+        } elseif ($this->wrap) {
+            $count = \count($this->lines);
+            $end = max(1, min($count, $count - $this->scrollOffset));
+            $idx = $end - 1;
+            while ($idx >= 0 && \count($out) < $rows) {
+                $wrapped = $this->wrapLine($this->lines[$idx], $cols);
+                array_splice($out, 0, 0, $wrapped);
+                --$idx;
+            }
+            if (\count($out) > $rows) {
+                $out = \array_slice($out, \count($out) - $rows);
+            }
         } else {
             $count = \count($this->lines);
             $start = max(0, $count - $rows - $this->scrollOffset);
@@ -200,7 +229,25 @@ final class LogViewerWidget extends AbstractWidget implements FocusableInterface
             'log_top' => [Key::HOME, 'g'],
             'log_tail' => [Key::END, 'G'],
             'log_toggle_follow' => ['f'],
+            'log_toggle_wrap' => ['w'],
         ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function wrapLine(string $line, int $cols): array
+    {
+        $width = AnsiUtils::visibleWidth($line);
+        if ($width <= $cols || $cols <= 0) {
+            return [$line];
+        }
+        $parts = [];
+        for ($start = 0; $start < $width; $start += $cols) {
+            $parts[] = AnsiUtils::sliceByColumn($line, $start, $cols);
+        }
+
+        return $parts;
     }
 
     private function scrollBy(int $delta): void

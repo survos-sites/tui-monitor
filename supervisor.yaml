@@ -23,5 +23,13 @@ processes:
     cmd: ['sh', '-c', 'while true; do echo stdout; echo stderr >&2; sleep 0.5; done']
     restart: always
 
+  long_lines:
+    cmd: ['sh', '-c', 'i=0; while true; do printf "long-%d %s\n" $i "$(head -c 200 /dev/urandom | base64 | tr -d "\n" | head -c 200)"; i=$((i+1)); sleep 1.5; done']
+    restart: always
+
+  progress_bar:
+    cmd: ['sh', '-c', 'while true; do for n in 1 2 3 4 5 6 7 8 9 10; do printf "\rdownloading [%s] %d%%" "$(printf "%-10s" "$(head -c $n /dev/zero | tr "\0" "#")")" $((n*10)); sleep 0.2; done; printf "\ndone\n"; sleep 0.5; done']
+    restart: always
+
 ring_buffer_lines: 5000
 follow_by_default: true

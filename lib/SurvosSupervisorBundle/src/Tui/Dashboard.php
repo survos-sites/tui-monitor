@@ -118,8 +118,8 @@ final class Dashboard
             $changed = $this->supervisor->tick();
             if ($changed) {
                 $this->refreshSidebar();
-                $this->refreshFooter();
             }
+            $this->refreshFooter();
             $event->setBusy();
         });
     }
@@ -158,7 +158,10 @@ final class Dashboard
 
     private function refreshFooter(): void
     {
-        $this->footer->setText($this->footerText());
+        $text = $this->footerText();
+        if ($this->footer->getText() !== $text) {
+            $this->footer->setText($text);
+        }
     }
 
     /**
@@ -204,11 +207,13 @@ final class Dashboard
 
     private function footerText(): string
     {
-        $follow = $this->logViewer->isFollowing() ? 'follow ON' : 'follow OFF';
+        $follow = $this->logViewer->isFollowing() ? 'ON' : 'OFF';
+        $wrap = $this->logViewer->isWrapping() ? 'ON' : 'OFF';
 
         return \sprintf(
-            '↑↓ select · Tab focus · q quit · r restart · p pause · s stop · S start · c clear · f %s',
+            '↑↓ select · Tab focus · q quit · r restart · p pause · s stop · S start · c clear · f follow:%s · w wrap:%s',
             $follow,
+            $wrap,
         );
     }
 
@@ -276,7 +281,7 @@ final class Dashboard
             ':root' => new Style(direction: Direction::Vertical),
             '.body' => new Style(direction: Direction::Horizontal, gap: 1),
             SelectListWidget::class => new Style(
-                maxColumns: 44,
+                maxColumns: 50,
                 border: Border::from([1], BorderPattern::ROUNDED, 'gray'),
             ),
             SelectListWidget::class.':focus' => new Style(
