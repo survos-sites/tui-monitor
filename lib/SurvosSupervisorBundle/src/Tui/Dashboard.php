@@ -165,7 +165,7 @@ final class Dashboard
     }
 
     /**
-     * @return list<array{value: string, label: string, description: string}>
+     * @return list<array{value: string, label: string}>
      */
     private function buildSidebarItems(): array
     {
@@ -173,36 +173,42 @@ final class Dashboard
         foreach ($this->supervisor->all() as $name => $managed) {
             $items[] = [
                 'value' => $name,
-                'label' => $name,
-                'description' => $this->describeState($managed),
+                'label' => $this->labelFor($managed),
             ];
         }
 
         return $items;
     }
 
-    private function describeState(ManagedProcess $managed): string
+    /**
+     * Status glyph + name + optional aux info, all in the label column so it
+     * renders even at narrow widths. SelectListWidget hides the description
+     * column at < 41 cols, which our sidebar typically is.
+     */
+    private function labelFor(ManagedProcess $managed): string
     {
+        $name = $managed->name();
         if ($managed->isPaused()) {
-            return '⏸ paused';
+            return '⏸ '.$name;
         }
         if ($managed->isRunning()) {
             $unread = $managed->unreadCount();
+            if ($unread > 0 && $name !== $this->focused) {
+                return \sprintf('● %s +%d', $name, $unread);
+            }
 
-            return $unread > 0 && $managed->name() !== $this->focused
-                ? \sprintf('● running (%d new)', $unread)
-                : '● running';
+            return '● '.$name;
         }
         if ($managed->isWaitingForRestart()) {
             $secs = max(0.0, ($managed->nextRestartAt() ?? 0.0) - microtime(true));
 
-            return \sprintf('↻ %.1fs', $secs);
+            return \sprintf('↻ %s %.1fs', $name, $secs);
         }
         if ($managed->isManuallyStopped()) {
-            return '■ stopped';
+            return '■ '.$name;
         }
 
-        return \sprintf('✗ exit %s', $managed->lastExitCode() ?? '?');
+        return \sprintf('✗ %s (%s)', $name, $managed->lastExitCode() ?? '?');
     }
 
     private function footerText(): string
