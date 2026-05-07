@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "683eb2dc68b5ad560315a17f224b2494",
+    "content-hash": "f4d900e71f233f54b9a2dfed12c45a10",
     "packages": [
         {
             "name": "composer/semver",
@@ -1967,6 +1967,55 @@
                 "source": "https://github.com/revoltphp/event-loop/tree/v1.0.8"
             },
             "time": "2025-08-27T21:33:23+00:00"
+        },
+        {
+            "name": "survos/command-schema",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "../mono/lib/command-schema",
+                "reference": "3298172591c5852b03eb02ad1b95ba7ced06d90f"
+            },
+            "require": {
+                "php": "^8.4",
+                "symfony/console": "^8.0"
+            },
+            "require-dev": {
+                "phpstan/phpstan": "^2.0",
+                "phpunit/phpunit": "^13.0",
+                "symplify/easy-coding-standard": "^13.0"
+            },
+            "suggest": {
+                "symfony/tui": "Required to use the bundled `commands` TUI runner (vendor/bin/commands)."
+            },
+            "bin": [
+                "bin/commands"
+            ],
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Survos\\CommandSchema\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Survos\\CommandSchema\\Tests\\": "tests/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Tac Tacelosky",
+                    "email": "tacman@gmail.com"
+                }
+            ],
+            "description": "Reflection-based metadata schema for Symfony Console commands. Consumed by TUI, web, and MCP runners that need a typed view of every command's arguments, options, and prompts.",
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
         },
         {
             "name": "symfony/asset",
@@ -10217,6 +10266,7 @@
     "aliases": [],
     "minimum-stability": "dev",
     "stability-flags": {
+        "survos/command-schema": 20,
         "symfony/tui": 20
     },
     "prefer-stable": true,
