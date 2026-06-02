@@ -10,7 +10,7 @@
         "symfony/dependency-injection": "^8.1",
         "symfony/http-kernel": "^8.1",
         "symfony/process": "^8.1",
-        "symfony/tui": "8.1.x-dev",
+        "symfony/tui": "^8.1",
         "symfony/yaml": "^8.1"
     },
     "autoload": {
