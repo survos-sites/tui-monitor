@@ -1,34 +1,30 @@
 processes:
-  slow_chatter:
-    cmd: ['sh', '-c', 'i=0; while true; do echo "tick $i $(date +%T)"; i=$((i+1)); sleep 1; done']
+  packagist_updates:
+    cmd: ['symfony', 'console', 'demo:packagist-updates', '-v']
     restart: always
 
-  fast_chatter:
-    cmd: ['sh', '-c', 'i=0; while true; do echo "fast $i"; i=$((i+1)); sleep 0.05; done']
+  url_health:
+    cmd: ['symfony', 'console', 'demo:http-head', '-v']
+    restart: always
+
+  debian_download:
+    cmd: ['symfony', 'console', 'demo:debian-download', '-v']
+    restart: always
+
+  queue_worker:
+    cmd: ['symfony', 'console', 'messenger:consume', 'async', '-v', '--time-limit=3600', '--memory-limit=512M']
+    restart: never
+
+  state_machine:
+    cmd: ['symfony', 'console', 'demo:state-machine', '-v']
     restart: always
 
   oneshot:
-    cmd: ['ls', '-la', '/etc']
+    cmd: ['symfony', 'console', 'demo:oneshot', '-v']
     restart: never
 
-  flaky:
-    cmd: ['sh', '-c', 'echo starting; sleep 2; exit 1']
-    restart: on-failure
-    backoff:
-      initial: 1.0
-      max: 30.0
-      multiplier: 2.0
-
-  noisy_stderr:
-    cmd: ['sh', '-c', 'while true; do echo stdout; echo stderr >&2; sleep 0.5; done']
-    restart: always
-
-  long_lines:
-    cmd: ['sh', '-c', 'i=0; while true; do printf "long-%d %s\n" $i "$(head -c 200 /dev/urandom | base64 | tr -d "\n" | head -c 200)"; i=$((i+1)); sleep 1.5; done']
-    restart: always
-
-  progress_bar:
-    cmd: ['sh', '-c', 'while true; do for n in 1 2 3 4 5 6 7 8 9 10; do printf "\rdownloading [%s] %d%%" "$(printf "%-10s" "$(head -c $n /dev/zero | tr "\0" "#")")" $((n*10)); sleep 0.2; done; printf "\ndone\n"; sleep 0.5; done']
+  ticker:
+    cmd: ['symfony', 'console', 'demo:ticker', '-v']
     restart: always
 
 ring_buffer_lines: 5000

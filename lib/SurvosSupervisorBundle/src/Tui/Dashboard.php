@@ -208,7 +208,7 @@ final class Dashboard
             return '■ '.$name;
         }
 
-        return \sprintf('✗ %s (%s)', $name, $managed->lastExitCode() ?? '?');
+        return \sprintf("\033[31m✗ %s (%s)\033[0m", $name, $managed->lastExitCode() ?? '?');
     }
 
     private function footerText(): string

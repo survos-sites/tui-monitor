@@ -8,6 +8,7 @@ framework:
                 dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
                 retry_strategy:
                     max_retries: 3
+                    delay: 2000
                     multiplier: 2
             failed: 'doctrine://default?queue_name=failed'
             # sync: 'sync://'
@@ -21,6 +22,8 @@ framework:
             Symfony\Component\Mailer\Messenger\SendEmailMessage: async
             Symfony\Component\Notifier\Message\ChatMessage: async
             Symfony\Component\Notifier\Message\SmsMessage: async
+            App\Message\GenerateThumbnail: async
+            App\Message\OcrPage: async
 
             # Route your messages to the transports
             # 'App\Message\YourMessage': async
