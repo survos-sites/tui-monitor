@@ -19,6 +19,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Yaml\Yaml;
+use Symfony\Contracts\Service\ServiceProviderInterface;
 
 #[AsCommand(name: 'survos:supervisor', description: 'Multi-process supervisor with TUI dashboard')]
 final class SupervisorCommand
@@ -28,6 +29,10 @@ final class SupervisorCommand
         private string $projectDir,
         #[Autowire('%survos_supervisor.config%')]
         private array $bundleConfig,
+        // The messenger transport registry — used only by --workflow to discover queues. Wired
+        // null-on-invalid in the bundle extension, so the supervisor stays usable as a generic
+        // process runner without symfony/messenger.
+        private readonly ?ServiceProviderInterface $receivers = null,
     ) {
     }
 
@@ -38,12 +43,18 @@ final class SupervisorCommand
         ?string $config = null,
         #[Option(description: 'Disable TUI; stream prefixed output lines to stdout')]
         bool $noTui = false,
+        #[Option(description: 'Supervise one messenger:consume worker per transport matching this code (e.g. "dataset" → dataset.raw, dataset.normalize, …)', shortcut: 'w')]
+        ?string $workflow = null,
     ): int {
         $io = new SymfonyStyle($input, $output);
-        [$resolved, $source] = $this->loadConfig($config, getcwd() ?: $this->projectDir);
+        [$resolved, $source] = null !== $workflow
+            ? $this->transportConfig($io, $workflow)
+            : $this->loadConfig($config, getcwd() ?: $this->projectDir);
 
         if (!$resolved['processes']) {
-            $io->error('No processes configured. Add a `processes:` section to your supervisor config.');
+            $io->error(null !== $workflow
+                ? sprintf('No messenger transports match "%s".', $workflow)
+                : 'No processes configured. Add a `processes:` section to your supervisor config.');
 
             return Command::FAILURE;
         }
@@ -60,6 +71,40 @@ final class SupervisorCommand
         }
 
         return (new Dashboard($supervisor, $resolved['follow_by_default']))->run();
+    }
+
+    /**
+     * Build a config on the fly: one `messenger:consume <transport>` per messenger transport whose
+     * name matches $code (exact, or prefix "<code>."). Discovered from the messenger transport
+     * registry, so it needs no knowledge of HOW the queues were defined (workflows, etc.).
+     *
+     * @return array{0: array, 1: ?string}
+     */
+    private function transportConfig(SymfonyStyle $io, string $code): array
+    {
+        $names = null !== $this->receivers ? array_keys($this->receivers->getProvidedServices()) : [];
+        if ([] === $names) {
+            $io->warning('No messenger transport registry available (is symfony/messenger installed?).');
+        }
+
+        $matched = array_values(array_filter(
+            $names,
+            static fn (string $n): bool => $n === $code || str_starts_with($n, $code . '.'),
+        ));
+        sort($matched);
+
+        $processes = [];
+        foreach ($matched as $transport) {
+            $processes[$transport] = [
+                'cmd' => ['php', 'bin/console', 'messenger:consume', $transport, '-v', '--time-limit=3600', '--memory-limit=512M'],
+                'restart' => 'always',
+            ];
+        }
+
+        return [
+            ['processes' => $processes, 'ring_buffer_lines' => 5000, 'follow_by_default' => true],
+            'workflow:' . $code,
+        ];
     }
 
     /**

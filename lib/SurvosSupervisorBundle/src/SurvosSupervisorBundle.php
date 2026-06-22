@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Survos\SupervisorBundle;
 
+use Survos\SupervisorBundle\Command\SupervisorCommand;
 use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
+
+use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 
 final class SurvosSupervisorBundle extends AbstractBundle
 {
@@ -82,5 +85,11 @@ final class SurvosSupervisorBundle extends AbstractBundle
                 '../src/Tui/',
             ])
         ;
+
+        // --workflow discovers queues from the messenger transport registry; inject it only when
+        // symfony/messenger is present (null otherwise), so the supervisor works standalone too.
+        $container->services()
+            ->get(SupervisorCommand::class)
+            ->arg('$receivers', service('messenger.receiver_locator')->nullOnInvalid());
     }
 }
